@@ -11,26 +11,22 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-'''
-Simply utility functions to improve QOL of QM developers and QM users
-'''
+"""Simply utility functions to improve QOL of QM developers and QM users."""
 
+import importlib
+import inspect
 import logging
+import os
 import re
 import sys
 import traceback
 import warnings
-import logging
-import sys
-import os
-import pandas as pd
-import numpy as np
-from scipy.spatial import distance
-from typing import Tuple, TYPE_CHECKING
-
 from copy import deepcopy
+from typing import TYPE_CHECKING, Tuple
+
+import pandas as pd
+
 from qiskit_metal.draw import Vector
-from numpy.linalg import norm
 
 if TYPE_CHECKING:
     from qiskit_metal import logger
@@ -48,8 +44,7 @@ __all__ = [
 
 
 def copy_update(options, *args, deep_copy=True, **kwargs):
-    '''
-    Utility funciton to merge two dictionaries.
+    """Utility funciton to merge two dictionaries.
 
     Args:
         options (object): Options
@@ -58,7 +53,7 @@ def copy_update(options, *args, deep_copy=True, **kwargs):
 
     Returns:
         dict: Merged dictionary
-    '''
+    """
     if deep_copy:
         options = deepcopy(options)
         options.update(*args, **kwargs)
@@ -69,8 +64,8 @@ def copy_update(options, *args, deep_copy=True, **kwargs):
 
 
 def dict_start_with(my_dict, start_with, as_=list):
-    ''' Case sensitive
-    https://stackoverflow.com/questions/17106819/accessing-python-dict-values-with-the-key-start-characters
+    """Case sensitive https://stackoverflow.com/questions/17106819/accessing-
+    python-dict-values-with-the-key-start-characters.
 
     Args:
         my_dict (dict): The dictionary
@@ -84,8 +79,7 @@ def dict_start_with(my_dict, start_with, as_=list):
 
         my_dict = {'name': 'Klauss', 'age': 26, 'Date of birth': '15th july'}
         dict_start_with(my_dict, 'Date')
-
-    '''
+    """
     if as_ == list:
         # start_with in k]
         return [v for k, v in my_dict.items() if k.startswith(start_with)]
@@ -126,10 +120,10 @@ def dict_start_with(my_dict, start_with, as_=list):
 
 
 def data_frame_empty_typed(column_types: dict):
-    """Creates and empty DataFrame with dtypes for each column given
-    by the dictionary.
+    """Creates and empty DataFrame with dtypes for each column given by the
+    dictionary.
 
-    Arguments:
+    Args:
         column_types (dict): A key, dtype pairs
 
     Returns:
@@ -144,7 +138,7 @@ def data_frame_empty_typed(column_types: dict):
 def clean_name(text: str):
     """Clean a string to a proper variable name in python.
 
-    Arguments:
+    Args:
         text (str): Original string
 
     Returns:
@@ -169,17 +163,13 @@ _old_warn = None
 
 
 def enable_warning_traceback():
-    """
-    Show ow traceback on warning.
-    """
+    """Show ow traceback on warning."""
 
     global _old_warn
     _old_warn = warnings.warn
 
     def warn(*args, **kwargs):
-        '''
-        Warn user with traceback to warning.
-        '''
+        """Warn user with traceback to warning."""
         tb = traceback.extract_stack()
         _old_warn(*args, **kwargs)
         print("".join(traceback.format_list(tb)[:-1]))
@@ -188,26 +178,25 @@ def enable_warning_traceback():
 
 
 def get_traceback():
-    '''
-    Returns traceback string. Format each frame in the traceback as a string.
+    """Returns traceback string. Format each frame in the traceback as a
+    string.
 
     Returns:
         str: Traceback string
-    '''
+    """
     trace_back = traceback.extract_stack()
     return "".join(traceback.format_list(trace_back)[:-1])
 
 
 def print_traceback_easy(start=26):
-    '''
-    Utility function to print traceback for debug.
-    Will report in series the string version of the frames that we are currently in.
+    """Utility function to print traceback for debug. Will report in series the
+    string version of the frames that we are currently in.
 
     Args:
         start (int): Starting position of the traceback frame.
                      Defaults to 26. Assumes runs from Jupyter notebooks.
                      In general set to zero.
-    '''
+    """
     print(f"\n")
     print('\n'.join(map(repr, traceback.extract_stack()[start:])))
     print('\n')
@@ -217,10 +206,9 @@ def log_error_easy(logger: logging.Logger,
                    pre_text='',
                    post_text='',
                    do_print=False):
-    """
-    Print log message.
+    """Print log message.
 
-    Arguments:
+    Args:
         logger (logging.Logger): The logger.
         pre_text (str): Initial text to write.  Defaults to ''.
         post_text (str): End text to write.  Defaults to ''.
@@ -249,7 +237,6 @@ def log_error_easy(logger: logging.Logger,
                 # logger.error('\\n\\n'+'\\n'.join(error)+'\\n')
                 log_error_easy(metal.logger)
         xx()
-
     """
     exc_type, exc_value, exc_tb = sys.exc_info()
     error = traceback.format_exception(exc_type, exc_value, exc_tb)
@@ -264,8 +251,7 @@ def log_error_easy(logger: logging.Logger,
 
 
 def monkey_patch(self, func, func_name=None):
-    '''
-    Monkey patch a method into a class at runtime.
+    """Monkey patch a method into a class at runtime.
 
     Use descriptor protocol when adding method as an attribute.
 
@@ -279,7 +265,7 @@ def monkey_patch(self, func, func_name=None):
     Args:
         func (function): function
         func_name (str): name of the function.  Defaults to None.
-    '''
+    """
     func_name = func_name or func.__name__
     setattr(self, func_name, func.__get__(self, self.__class__))
     # what happens if we reload the class or swap in real time?
@@ -417,10 +403,9 @@ def get_range_of_vertex_to_not_fillet(coords: list,
                                       fradius: float,
                                       precision: int = 9,
                                       add_endpoints: bool = True) -> list:
-    """
-    Provide a list of tuples for a list of integers that correspond to coords.
-    Each tuple corresponds to a range of indexes within coords.  A range denotes vertexes that
-    are too short to be fillet'd.
+    """Provide a list of tuples for a list of integers that correspond to
+    coords. Each tuple corresponds to a range of indexes within coords.  A
+    range denotes vertexes that are too short to be fillet'd.
 
     If the range is just one point, meaning, not a segment, the tuple will contain
     the same index for start and end.
@@ -457,18 +442,15 @@ def get_range_of_vertex_to_not_fillet(coords: list,
 
 
 def compress_vertex_list(individual_vertex: list) -> list:
-    """
-    Given a list of vertices that should not be fillet'd,
-    search for a range and make them one compressed list.
-    If the vertex is a point and not a line segment, the returned tuple's
-    start and end are the same index.
+    """Given a list of vertices that should not be fillet'd, search for a range
+    and make them one compressed list. If the vertex is a point and not a line
+    segment, the returned tuple's start and end are the same index.
 
     Args:
         individual_vertex (list): List of UNIQUE ints.  Each int refers to an index of a LineString.
 
     Returns:
         list: A compressed list of tuples.  So, it combines adjacent vertices into a longer one.
-
     """
     reduced_idx = list()
 
@@ -538,7 +520,7 @@ def can_write_to_path_with_warning(file: str) -> int:
 
 
 def can_write_to_path(file: str) -> Tuple[int, str]:
-    """ Check to see if path exists and file can be written.
+    """Check to see if path exists and file can be written.
 
     Args:
         file (str): Has the path and/or just the file name.

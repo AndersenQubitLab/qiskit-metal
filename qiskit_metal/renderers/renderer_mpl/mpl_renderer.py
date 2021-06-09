@@ -11,9 +11,7 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-MPL Renderer
-"""
+"""MPL Renderer."""
 import logging
 import random
 import sys
@@ -58,15 +56,10 @@ __all__ = ['QMplRenderer']
 
 to_poly_patch = np.vectorize(PolygonPatch)
 
-# TODO: subclass from QRendererGui - define QRendererGui from this class as interface class
-
 
 class QMplRenderer():
-    """
-    Matplotlib handle all rendering of an axis.
-
+    """Matplotlib handle all rendering of an axis.
     The axis is given in the function render.
-
     Access:
         self = gui.canvas.metal_renderer
     """
@@ -100,12 +93,9 @@ class QMplRenderer():
         self.set_design(design)
 
     def get_color_num(self, num: int) -> str:
-        """
-        Get the color from the given number
-
+        """Get the color from the given number.
         Args:
             num (int): number
-
         Return:
             str: color
         """
@@ -113,7 +103,6 @@ class QMplRenderer():
 
     def hide_component(self, name):
         """Hide the component with the given name.
-
         Args:
             name (str): Component name
         """
@@ -122,7 +111,6 @@ class QMplRenderer():
 
     def show_component(self, name):
         """Show the component with the given name.
-
         Args:
             name (str): Component name
         """
@@ -131,7 +119,6 @@ class QMplRenderer():
 
     def hide_layer(self, name):
         """Hide the layer with the given name.
-
         Args:
             name (str): Layer name
         """
@@ -139,7 +126,6 @@ class QMplRenderer():
 
     def show_layer(self, name):
         """Show the layer with the given name.
-
         Args:
             name (str): Layer name
         """
@@ -147,7 +133,6 @@ class QMplRenderer():
 
     def set_design(self, design: QDesign):
         """Set the design.
-
         Args:
             design (QDesign): The design
         """
@@ -162,8 +147,7 @@ class QMplRenderer():
 
     def render(self, ax: Axes):
         """Assumes that the axis has been cleared already and so on.
-
-        Arguments:
+        Args:
             ax (matplotlib.axes.Axes): mpl axis to draw on
         """
 
@@ -171,19 +155,16 @@ class QMplRenderer():
         self.render_tables(ax)
 
     def get_mask(self, table: pd.DataFrame) -> pd.Series:
-        '''
-        Gets the mask.
-
+        """Gets the mask.
         Args:
             table (pd.DataFrame): dataframe
-
         Returns:
             pd.Series: return pandas index series with boolen mask
             - i.e., which are not hidden or otherwise
-        '''
+        """
 
         # TODO: Ideally these should be replaced with interface functions,
-        # not direct access to undelying internal representation
+        # not direct access to underlying internal representation
 
         mask = table.layer.isin(self.hidden_layers)
         mask = table.component.isin(self._hidden_components)
@@ -192,7 +173,6 @@ class QMplRenderer():
 
     def _render_poly_array(self, ax: Axes, poly_array: np.array, mpl_kw: dict):
         """Render the poly array.
-
         Args:
             ax (Axes): The axis
             poly_array (np.array): The poly
@@ -229,13 +209,11 @@ class QMplRenderer():
                   layer=None,
                   extra=None):
         """Get the style.
-
         Args:
             element_type (str): The type of element.
-            subtracted (bool): True to subtrat the key.  Defaults to False.
+            subtracted (bool): True to subtract the key.  Defaults to False.
             layer (layer): The layer.  Defaults to None.
             extra (dict): Extra stuff to add.  Defaults to None.
-
         Return:
             dict: Style dictionary
         """
@@ -257,7 +235,6 @@ class QMplRenderer():
 
     def render_tables(self, ax: Axes):
         """Render the tables.
-
         Args:
             ax (Axes): The axes
         """
@@ -284,19 +261,41 @@ class QMplRenderer():
                         ax: Axes,
                         subtracted: bool = False,
                         extra_kw: dict = None):
-        """For Now, do nothing.  TODO:render junction tables.
+        """Render a table of junction geometry.
+        A junction is basically drawn like a path with finite width and no fillet.
+        Args:
+            table (DataFrame): Element table
+            ax (matplotlib.axes.Axes): Axis to render on
+            extra_kw (dict): Style params
         """
-        pass
+        if len(table) > 0:
+            mask = (table.width == 0) | table.width.isna()
+            table1 = table[~mask]
+            if len(table1) > 0:
+                table1.geometry = table1[['geometry', 'width']].apply(
+                    lambda x: x[0].buffer(distance=float(x[1]) / 2.,
+                                          cap_style=CAP_STYLE.flat,
+                                          join_style=JOIN_STYLE.mitre,
+                                          resolution=int(self.options[
+                                              'resolution'])),
+                    axis=1)
+                kw = self.get_style('poly',
+                                    subtracted=subtracted,
+                                    extra=extra_kw)
+                self.render_poly(table1, ax, subtracted=subtracted, extra_kw=kw)
+            table1 = table[mask]
+            if len(table1) > 0:
+                self.logger.warning(
+                    'One or more junctions have zero width. Consider changing this.'
+                )
 
     def render_poly(self,
                     table: pd.DataFrame,
                     ax: Axes,
                     subtracted: bool = False,
                     extra_kw: dict = None):
-        """
-        Render a table of poly geometry.
-
-        Arguments:
+        """Render a table of poly geometry.
+        Args:
             table (DataFrame): Element table
             ax (matplotlib.axes.Axes): Axis to render on
             kw (dict): Style params
@@ -308,12 +307,9 @@ class QMplRenderer():
         self._render_poly_array(ax, table.geometry, kw)
 
     def render_fillet(self, table):
-        """
-        Renders fillet path.
-
-        Arguments:
+        """Renders fillet path.
+        Args:
             table (DataFrame): Table of elements with fillets
-
         Returns:
             DataFrame table with geometry field updated with a polygon filleted path.
         """
@@ -321,12 +317,9 @@ class QMplRenderer():
         return table
 
     def fillet_path(self, row):
-        """
-        Output the filleted path.
-
-        Arguments:
+        """Output the filleted path.
+        Args:
             row (DataFrame): Row to fillet.
-
         Returns:
             Polygon of the new filleted path.
         """
@@ -361,11 +354,9 @@ class QMplRenderer():
                      vertex_end,
                      radius,
                      points=16):
-        """
-        Returns the filleted path based on the start, corner, and end vertices and the
-        fillet radius.
-
-        Arguments:
+        """Returns the filleted path based on the start, corner, and end
+        vertices and the fillet radius.
+        Args:
             vertex_start (np.ndarray): x-y coordinates of starting vertex.
             vertex_corner (np.ndarray): x-y coordinates of corner vertex.
             vertex_end (np.ndarray): x-y coordinates of end vertex.
@@ -418,10 +409,8 @@ class QMplRenderer():
                     ax: Axes,
                     subtracted: bool = False,
                     extra_kw: dict = None):
-        """
-        Render a table of path geometry.
-
-        Arguments:
+        """Render a table of path geometry.
+        Args:
             table (DataFrame): Element table
             ax (matplotlib.axes.Axes): Axis to render on
             kw (dict): Style params
@@ -498,7 +487,7 @@ class QMplRenderer():
 #         represents the "port" of a connector point. These are referenced for smart placement
 #             of Metal components, such as when using functions like Metal_CPW_Connect.
 
-#         TODO: add some filter for sense of what components are visibile?
+#         TODO: add some filter for sense of what components are visible?
 #               or on what chip the connectors are
 #         '''
 

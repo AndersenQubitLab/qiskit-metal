@@ -13,13 +13,6 @@ Frequently asked questions.
 Setting up environment
 ----------------------
 
-**Why am I observing `pyqode`-related errors?**
-
-Please be aware that the environment.xml and requirements.txt each use a different ``pyside`` version. This is done for Windows OS users to prevent a ipython kernel crash caused by the installation of a library incompatible with ``pyqode``.
-
-For other OS users, this setup might cause ``pyqode.qt`` to be upgraded automatically after it is first installed.  If you still observe pyqode-related errors, try forcing the upgrade of the pyqode.python library with ``pip install pyqode.python --upgrade``.
-
-If Windows users continue to experience GUI or other issues, try rerunning `python setup.py install` or creating a new, pristine conda environment as per above instructions. Pay particular attention to the python version, which must remain 3.7.8 for as long as qiskit-metal utilizes pyqode.
 
 **Why do I have an inactive developer path on MacOs?**
 
@@ -73,6 +66,12 @@ Based on: `this <https://anaconda.org/conda-forge/jupyterlab>`_, install Jupyter
 Then change directory to top level of repository.
 
 ``python -m pip install -e .``
+
+**Why am I seeing a critical error from qt about not controlling layer-backing?**
+
+If you are seeing: `CRITICAL [_qt_message_handler]: ....  WARNING: Layer-backing can not be explicitly controlled on 10.14 when built against the 10.14 SDK ...` you are likely running a MAC OS version that has trouble with the libraries.
+Based on information that is available online, this problem does not appear to have a solution. However, it does not seem like this error affects Qiskit Metal's functionality.
+If you find problem with this, you might want to try using an older version of the dependency packages, beginning with lowering your python version to 3.7.x.
 
 
 

@@ -12,19 +12,16 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from .dialog_popup import Ui_Dialog
-from .add_delete_table import Ui_MainWindow
-from .prop_val_table_model import PropValTable
-from .right_click_table_view import RightClickView
-from PySide2 import QtWidgets, QtGui, QtCore
-from PySide2.QtGui import QFont
 from PySide2.QtCore import QModelIndex
-from PySide2.QtWidgets import QMainWindow, QTableView, QDialog
+from PySide2.QtWidgets import QDialog, QMainWindow
+
+from .add_delete_table_ui import Ui_MainWindow
+from .dialog_popup_ui import Ui_Dialog
+from .prop_val_table_model import PropValTable
 
 
 class PropertyTableWidget(QMainWindow):
-    """
-    GUI for variables table with 3 columns: Property, Value, Number.
+    """GUI for variables table with 3 columns: Property, Value, Number.
 
     Extends the `QMainWindow` class.
     """
@@ -57,7 +54,8 @@ class PropertyTableWidget(QMainWindow):
         self.show()
 
     def set_design(self, design):
-        """Swap out reference to design, which changes the reference to the dictionary.
+        """Swap out reference to design, which changes the reference to the
+        dictionary.
 
         Args:
             design (QDesign): The design
@@ -77,9 +75,7 @@ class PropertyTableWidget(QMainWindow):
             return self._design.variables
 
     def addRow(self):
-        """
-        Add a new row.
-        """
+        """Add a new row."""
         db = QDialog(self)
         dialog = Ui_Dialog()
         dialog.setupUi(db)
@@ -90,9 +86,7 @@ class PropertyTableWidget(QMainWindow):
             self.model.add_row(key, val)
 
     def deleteRow(self):
-        """
-        Delete all rows corresponding to selected cells.
-        """
+        """Delete all rows corresponding to selected cells."""
         rowidxlst = list(set(elt.row() for elt in self.table.selectedIndexes()))
         for idx in sorted(rowidxlst, reverse=True):
             self.model.removeRows(idx, 1, QModelIndex())

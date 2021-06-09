@@ -13,13 +13,11 @@
 # that they have been altered from the originals.
 
 from qiskit_metal import draw, Dict, is_true
-from qiskit_metal.qlibrary.base.base import QComponent
+from qiskit_metal.qlibrary.core import QComponent
 
 
 class MyQComponent(QComponent):
-    """
-    Use this class as a template for your components.
-    """
+    """Use this class as a template for your components."""
 
     # Edit these to define your own tempate options for creation
     # Default drawing options
@@ -34,6 +32,8 @@ class MyQComponent(QComponent):
     # Name prefix of component, if user doesn't provide name
     component_metadata = Dict(short_name='component')
     """Component metadata"""
+
+    TOOLTIP = """This is a QComponent brief summary"""
 
     # DO NOT DIRECTLY INSTANTIATE USING make() Use build()
     def make(self):

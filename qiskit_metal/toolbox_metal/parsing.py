@@ -11,8 +11,12 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-'''
-Parsing module Qiskit Metal.
+
+# pylint: disable-msg=broad-except
+# pylint: disable-msg=relative-beyond-top-level
+# pylint: disable-msg=import-error
+# pylint: disable-msg=line-too-long
+"""Parsing module Qiskit Metal.
 
 The main function in this module is `parse_value`, and it explains what
 and how it is handled. Some basic arithmetic can be handled as well,
@@ -163,15 +167,15 @@ Returns:
         'variable1': 0.01,
         'list1': [1000.0, 0.005, 0.01, -1, False, 'a string'],
         'dict1': {'key1': 4e-06, '2mm': 0.1}}
+"""
 
-'''
-
-import ast
-import numpy as np
 from collections.abc import Iterable
 from collections.abc import Mapping
 from numbers import Number
 from typing import Union
+
+import ast
+import numpy as np
 import pint
 
 from .. import Dict, config, logger
@@ -198,7 +202,7 @@ TRUE_STR = [
 def is_true(value: Union[str, int, bool, float]) -> bool:
     """Check if a value is true or not.
 
-    Arguments:
+    Args:
         value (str): Value to check
 
     Returns:
@@ -228,7 +232,7 @@ def _parse_string_to_float(expr: str):
 
     Original code: pyEPR.hfss - see file.
 
-    Arguments:
+    Args:
         expr (str): String expression such as '1nm'.
 
     Internal:
@@ -259,7 +263,7 @@ def _parse_string_to_float(expr: str):
 def is_variable_name(test_str: str):
     """Is the test string a valid name for a variable or not?
 
-    Arguments:
+    Args:
         test_str (str): Test string
 
     Returns:
@@ -269,11 +273,10 @@ def is_variable_name(test_str: str):
 
 
 def is_for_ast_eval(test_str: str):
-    """
-    Is the test string a valid list of dict string,
-    such as "[1, 2]", that can be evaluated by ast eval.
+    """Is the test string a valid list of dict string, such as "[1, 2]", that
+    can be evaluated by ast eval.
 
-    Arguments:
+    Args:
         test_str (str): Test string
 
     Returns:
@@ -284,10 +287,9 @@ def is_for_ast_eval(test_str: str):
 
 
 def is_numeric_possible(test_str: str):
-    """
-    Is the test string a valid possible numerical with /or w/o units.
+    """Is the test string a valid possible numerical with /or w/o units.
 
-    Arguments:
+    Args:
         test_str (str): Test string
 
     Returns:
@@ -297,11 +299,12 @@ def is_numeric_possible(test_str: str):
     # look into pyparsing
 
 
+# pylint: disable-msg=too-many-branches
+# pylint: disable-msg=too-many-return-statements
 def parse_value(value: str, variable_dict: dict):
-    """
-    Parse a string, mappable (dict, Dict), iterable (list, tuple) to account for units conversion,
-    some basic arithmetic, and design variables.
-    This is the main parsing function of Qiskit Metal.
+    """Parse a string, mappable (dict, Dict), iterable (list, tuple) to account
+    for units conversion, some basic arithmetic, and design variables. This is
+    the main parsing function of Qiskit Metal.
 
     Handled Inputs:
 
@@ -331,7 +334,7 @@ def parse_value(value: str, variable_dict: dict):
         See the docstring for this module.
             >> ?qiskit_metal.toolbox_metal.parsing
 
-    Arguments:
+    Args:
         value (str): String to parse
         variable_dict (dict): dict pointer of variables
 
@@ -353,15 +356,15 @@ def parse_value(value: str, variable_dict: dict):
                 if val in variable_dict:
                     # Parse the returned value
                     return parse_value(variable_dict[val], variable_dict)
-                else:
-                    # Assume it is a string and just return it
-                    # CAUTION: This could cause issues for the user, if they meant to pass a variable
-                    # but mistyped it or didn't define it. But they might also want to pass a string
-                    # that is variable name compatible, such as pec.
-                    # This is basically about type checking, which we can get back to later.
-                    return val
 
-            elif is_for_ast_eval(val):
+                # Assume it is a string and just return it
+                # CAUTION: This could cause issues for the user, if they meant to pass a variable
+                # but mistyped it or didn't define it. But they might also want to pass a string
+                # that is variable name compatible, such as pec.
+                # This is basically about type checking, which we can get back to later.
+                return val
+
+            if is_for_ast_eval(val):
                 # If it is a list or dict, this will do a literal eval, so string have
                 # to be in "" else [5um , 4um ] wont work, but ["5um", "0.4 um"] will
                 evaluated = ast.literal_eval(val)
@@ -371,18 +374,18 @@ def parse_value(value: str, variable_dict: dict):
                         parse_value(element, variable_dict)
                         for element in evaluated
                     ]
-                elif isinstance(evaluated, dict):
+                if isinstance(evaluated, dict):
                     return Dict({
                         key: parse_value(element, variable_dict)
                         for key, element in evaluated.items()
                     })
-                else:
-                    logger.error(
-                        f'Unknown error in `is_for_ast_eval`\nval={val}\nevaluated={evaluated}'
-                    )
-                    return evaluated
 
-            elif is_numeric_possible(val):
+                logger.error(
+                    f'Unknown error in `is_for_ast_eval`\nval={val}\nevaluated={evaluated}'
+                )
+                return evaluated
+
+            if is_numeric_possible(val):
                 return _parse_string_to_float(value)
 
     elif isinstance(value, Mapping):

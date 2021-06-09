@@ -35,8 +35,7 @@
 # THE SOFTWARE.
 #
 # ###########################################################################*/
-"""
-Pan and zoom interaction to plug on a matplotlib Figure.
+"""Pan and zoom interaction to plug on a matplotlib Figure.
 
 Interaction:
     - Zoom in/out with the mouse wheel
@@ -75,7 +74,6 @@ Known limitations:
     - Only support linear and log scale axes.
     - Zoom area not working well with keep aspect ratio.
     - Interfere with matplotlib toolbar.
-
 """
 
 import logging
@@ -107,7 +105,7 @@ class MplInteraction(object):
         self._cids = []
 
     def __del__(self):
-        """Disconnnect."""
+        """Disconnect."""
         self.disconnect()
 
     def _add_connection(self, event_name, callback):
@@ -131,13 +129,13 @@ class MplInteraction(object):
 
     @property
     def figure(self):
-        """The Figure this interaction is connected to or
-        None if not connected."""
+        """The Figure this interaction is connected to or None if not
+        connected."""
         return self._fig_ref() if self._fig_ref is not None else None
 
     def _axes_to_update(self, event):
-        """Returns two sets of Axes to update according to event.
-        Takes care of multiple axes and shared axes.
+        """Returns two sets of Axes to update according to event. Takes care of
+        multiple axes and shared axes.
 
         Args:
             event (MouseEvent): Matplotlib event to consider
@@ -164,7 +162,7 @@ class MplInteraction(object):
         return x_axes, y_axes
 
     def _draw(self):
-        """Conveninent method to redraw the figure."""
+        """Convenient method to redraw the figure."""
         self.figure.canvas.draw()
 
 
@@ -266,9 +264,9 @@ class ZoomOnWheel(MplInteraction):
 
 
 class PanAndZoom(ZoomOnWheel):
-    """Class providing pan & zoom interaction to a matplotlib Figure.
-    Left button for pan, right button for zoom area and zoom on wheel.
-    Support subplots, twin Axes and log scales.
+    """Class providing pan & zoom interaction to a matplotlib Figure. Left
+    button for pan, right button for zoom area and zoom on wheel. Support
+    subplots, twin Axes and log scales.
 
     This class extends the `ZoomOnWheel` class.
     """
@@ -292,8 +290,8 @@ class PanAndZoom(ZoomOnWheel):
         self.logger = None
         self._statusbar_label = None
 
-        #self._get_images_path()
-        #self._add_toolbar_tools()
+        # self._get_images_path()
+        # self._add_toolbar_tools()
         self._style_figure()
 
         self._ix_iy_old = (0, 0)
@@ -329,7 +327,7 @@ class PanAndZoom(ZoomOnWheel):
         from matplotlib.backend_tools import ToolToggleBase  # ToolBase
 
         class ToolPointPosition(ToolToggleBase):
-            '''Tools.'''
+            """Tools."""
             default_keymap = 'Ctrl+p'
             description = 'Click to get point coordinate printed'
             default_toggled = False
@@ -349,6 +347,7 @@ class PanAndZoom(ZoomOnWheel):
 
         fig = self.figure
         imgs_path = self.imgs_path
+        # pylint: disable=attribute-defined-outside-init
         toolbar = self.toolbar = fig.canvas.manager.toolbar
 
         # Get tool manager
@@ -357,6 +356,7 @@ class PanAndZoom(ZoomOnWheel):
 
         # ToolbarQt   --- https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/backends/backend_qt5.py
         tm = fig.canvas.manager.toolmanager
+
         self.tm = tm
         # Tool: Print point location
         ToolPointPosition.image = str(imgs_path / 'click.png')
@@ -485,13 +485,14 @@ class PanAndZoom(ZoomOnWheel):
             self._event = event
 
     def _zoom_area(self, event):
-        """Zoom
+        """Zoom.
 
         Args:
             event (event): The event
         """
         if event.name == 'button_press_event':  # begin drag
             self._event = event
+            # pylint: disable=attribute-defined-outside-init
             self._patch = _plt.Rectangle(xy=(event.xdata, event.ydata),
                                          width=0,
                                          height=0,
@@ -552,7 +553,7 @@ class PanAndZoom(ZoomOnWheel):
         self._draw()
 
     def _on_mouse_press(self, event):
-        """Mouse press event
+        """Mouse press event.
 
         Args:
             event (event): The event
@@ -576,7 +577,7 @@ class PanAndZoom(ZoomOnWheel):
                     self._zoom_area(event)
 
     def _on_mouse_release(self, event):
-        """Mouse release event
+        """Mouse release event.
 
         Args:
             event (event): The event
@@ -589,7 +590,7 @@ class PanAndZoom(ZoomOnWheel):
             self._pressed_button = None
 
     def _on_mouse_motion(self, event):
-        """Mouse motion event
+        """Mouse motion event.
 
         Args:
             event (event): The event
@@ -600,7 +601,7 @@ class PanAndZoom(ZoomOnWheel):
             self._zoom_area(event)
 
     def _report_point_position(self, event):
-        """Report point position
+        """Report point position.
 
         Args:
             event (event): the event
@@ -619,7 +620,7 @@ class PanAndZoom(ZoomOnWheel):
             self.logger.info(_text)
         if self._statusbar_label:
             self._statusbar_label.setText(_text)
-        #print(_text)
+        # print(_text)
 
 
 def figure_pz(*args, **kwargs):
@@ -637,77 +638,77 @@ def figure_pz(*args, **kwargs):
     return fig
 
 
-"""
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
+# """
+# if __name__ == "__main__":
+#     import matplotlib.pyplot as plt
 
-    fig = figure_pz()
-    # Alternative:
-    # fig = plt.figure()
-    # pan_zoom = PanAndZoom(fig)
+#     fig = figure_pz()
+#     # Alternative:
+#     # fig = plt.figure()
+#     # pan_zoom = PanAndZoom(fig)
 
-    nrow, ncol = 2, 3
+#     nrow, ncol = 2, 3
 
-    ax1 = fig.add_subplot(nrow, ncol, 1)
-    ax1.set_title('basic')
-    ax1.plot((1, 2, 3))
+#     ax1 = fig.add_subplot(nrow, ncol, 1)
+#     ax1.set_title('basic')
+#     ax1.plot((1, 2, 3))
 
-    ax2 = fig.add_subplot(nrow, ncol, 2)
-    ax2.set_title('log + twinx')
-    ax2.set_yscale('log')
-    ax2.plot((1, 2, 1))
+#     ax2 = fig.add_subplot(nrow, ncol, 2)
+#     ax2.set_title('log + twinx')
+#     ax2.set_yscale('log')
+#     ax2.plot((1, 2, 1))
 
-    ax2bis = ax2.twinx()
-    ax2bis.plot((3, 2, 1), color='red')
+#     ax2bis = ax2.twinx()
+#     ax2bis.plot((3, 2, 1), color='red')
 
-    ax3 = fig.add_subplot(nrow, ncol, 3)
-    ax3.set_title('inverted y axis')
-    ax3.plot((1, 2, 3))
-    lim = ax3.get_ylim()
-    ax3.set_ylim(lim[1], lim[0])
+#     ax3 = fig.add_subplot(nrow, ncol, 3)
+#     ax3.set_title('inverted y axis')
+#     ax3.plot((1, 2, 3))
+#     lim = ax3.get_ylim()
+#     ax3.set_ylim(lim[1], lim[0])
 
-    ax4 = fig.add_subplot(nrow, ncol, 4)
-    ax4.set_title('keep ratio')
-    ax4.axis('equal')
-    ax4.imshow(numpy.arange(100).reshape(10, 10))
+#     ax4 = fig.add_subplot(nrow, ncol, 4)
+#     ax4.set_title('keep ratio')
+#     ax4.axis('equal')
+#     ax4.imshow(numpy.arange(100).reshape(10, 10))
 
-    ax5 = fig.add_subplot(nrow, ncol, 5)
-    ax5.set_xlabel('symlog scale + twiny')
-    ax5.set_xscale('symlog')
-    ax5.plot((1, 2, 3))
-    ax5bis = ax5.twiny()
-    ax5bis.plot((3, 2, 1), color='red')
+#     ax5 = fig.add_subplot(nrow, ncol, 5)
+#     ax5.set_xlabel('symlog scale + twiny')
+#     ax5.set_xscale('symlog')
+#     ax5.plot((1, 2, 3))
+#     ax5bis = ax5.twiny()
+#     ax5bis.plot((3, 2, 1), color='red')
 
-    # The following is taken from:
-    # http://matplotlib.org/examples/axes_grid/demo_curvelinear_grid.html
-    from mpl_toolkits.axisartist import Subplot
-    from mpl_toolkits.axisartist.grid_helper_curvelinear import \
-        GridHelperCurveLinear
+#     # The following is taken from:
+#     # http://matplotlib.org/examples/axes_grid/demo_curvelinear_grid.html
+#     from mpl_toolkits.axisartist import Subplot
+#     from mpl_toolkits.axisartist.grid_helper_curvelinear import \
+#         GridHelperCurveLinear
 
-    def tr(x, y):  # source (data) to target (rectilinear plot) coordinates
-        x, y = numpy.asarray(x), numpy.asarray(y)
-        return x + 0.2 * y, y - x
+#     def tr(x, y):  # source (data) to target (rectilinear plot) coordinates
+#         x, y = numpy.asarray(x), numpy.asarray(y)
+#         return x + 0.2 * y, y - x
 
-    def inv_tr(x, y):
-        x, y = numpy.asarray(x), numpy.asarray(y)
-        return x - 0.2 * y, y + x
+#     def inv_tr(x, y):
+#         x, y = numpy.asarray(x), numpy.asarray(y)
+#         return x - 0.2 * y, y + x
 
-    grid_helper = GridHelperCurveLinear((tr, inv_tr))
+#     grid_helper = GridHelperCurveLinear((tr, inv_tr))
 
-    ax6 = Subplot(fig, nrow, ncol, 6, grid_helper=grid_helper)
-    fig.add_subplot(ax6)
-    ax6.set_title('non-ortho axes')
+#     ax6 = Subplot(fig, nrow, ncol, 6, grid_helper=grid_helper)
+#     fig.add_subplot(ax6)
+#     ax6.set_title('non-ortho axes')
 
-    xx, yy = tr([3, 6], [5.0, 10.])
-    ax6.plot(xx, yy)
+#     xx, yy = tr([3, 6], [5.0, 10.])
+#     ax6.plot(xx, yy)
 
-    ax6.set_aspect(1.)
-    ax6.set_xlim(0, 10.)
-    ax6.set_ylim(0, 10.)
+#     ax6.set_aspect(1.)
+#     ax6.set_xlim(0, 10.)
+#     ax6.set_ylim(0, 10.)
 
-    ax6.axis["t"] = ax6.new_floating_axis(0, 3.)
-    ax6.axis["t2"] = ax6.new_floating_axis(1, 7.)
-    ax6.grid(True)
+#     ax6.axis["t"] = ax6.new_floating_axis(0, 3.)
+#     ax6.axis["t2"] = ax6.new_floating_axis(1, 7.)
+#     ax6.grid(True)
 
-    plt.show()
-"""
+#     plt.show()
+# """

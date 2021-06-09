@@ -11,8 +11,7 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-Main module for shapely manipulation and drawing.
+"""Main module for shapely manipulation and drawing.
 
 **Manipulation:**
     The module defines rotate, scale, translate to operate on a various set of
@@ -32,7 +31,7 @@ import shapely.wkt
 from shapely.geometry import CAP_STYLE, JOIN_STYLE, Point, Polygon
 
 from .. import config, logger
-from ..qlibrary.base import is_component
+from .. import is_component
 from ..config import DefaultMetalOptions
 from . import BaseGeometry
 from .utility import get_poly_pts
@@ -44,10 +43,9 @@ __all__ = [
 
 
 def rectangle(w: float, h: float, xoff: float = 0, yoff: float = 0):
-    """
-    Draw a shapely rectangle of width and height.
+    """Draw a shapely rectangle of width and height.
 
-    Arguments:
+    Args:
         w (float) :  width
         h (float) :  height
         xoff (float, optional) : Gives the x position of the center.  Defaults to 0.
@@ -73,8 +71,7 @@ def rectangle(w: float, h: float, xoff: float = 0, yoff: float = 0):
 
 
 def is_rectangle(obj):
-    '''
-    Test if a shapely object is a rectangle.
+    """Test if a shapely object is a rectangle.
 
     If there are 4 ext cooridnate then
     check if consequtive vectors are orhtogonal.
@@ -85,7 +82,7 @@ def is_rectangle(obj):
 
     Returns:
         bool: True is object is a rectangle, false otherwise
-    '''
+    """
     if not isinstance(obj, shapely.geometry.Polygon):
         return False
 
@@ -148,8 +145,7 @@ def flip_merge(line: shapely.geometry.LineString,
                xfact=-1,
                yfact=+1,
                origin=(0, 0)):
-    '''
-    Mirror type of drawing command on LineString.
+    """Mirror type of drawing command on LineString.
 
     Calls shapely.affinity.scale(geom, xfact=xfact, yfact=yfact, zfact=1.0, origin=origin).
 
@@ -167,7 +163,7 @@ def flip_merge(line: shapely.geometry.LineString,
     Returns:
         list: The coorindates that can be used to construct a polygon, by flipping a linestring
         over an axis and mirroring it.
-    '''
+    """
     line_flip = shapely.affinity.scale(line,
                                        xfact=xfact,
                                        yfact=yfact,
@@ -177,7 +173,8 @@ def flip_merge(line: shapely.geometry.LineString,
 
 
 def _iter_func_geom_(func, objs, *args, overwrite=False, **kwargs):
-    """Apply function to shapely geometry, and handle. This will create a new dictionary.
+    """Apply function to shapely geometry, and handle. This will create a new
+    dictionary.
 
     Applied to on:
         For components:
@@ -190,7 +187,7 @@ def _iter_func_geom_(func, objs, *args, overwrite=False, **kwargs):
         For list:
             to each element
 
-    Arguments:
+    Args:
         func (function): Function the apply
         objs (Dict, List, Tuple or BaseGeometry): Set of objects
         overwrite (bool): Overwrite the parent dict or not. This applies to component qgeometry dictionary.
@@ -391,10 +388,9 @@ def rotate_position(qgeometry,
                     pos: list,
                     pos_rot=(0, 0),
                     overwrite=False):
-    '''
-    Orient and then place position. Just a shortcut function.
+    """Orient and then place position. Just a shortcut function.
 
-    Arguments:
+    Args:
         qgeometry (Dict, List, Tuple or BaseGeometry): Set of objects
         angle (float): Rotation angle
         pos (list, np.array): Position to translate to
@@ -402,7 +398,7 @@ def rotate_position(qgeometry,
 
     Returns:
         geometry: Rotate dand translated, same as input
-    '''
+    """
 
     def rotate_position_shapely(sobj):
         pos1 = list(shapely.affinity.rotate(Point(pos), angle).coords)[0]
@@ -422,8 +418,7 @@ def buffer(qgeometry,
            join_style=JOIN_STYLE.mitre,
            mitre_limit=None,
            overwrite=False):
-    '''
-    Flat buffer of all components in the dictionary.
+    """Flat buffer of all components in the dictionary.
 
     Default stlye:
         - cap_style=CAP_STYLE.flat
@@ -467,7 +462,7 @@ def buffer(qgeometry,
         y = buffer_flat([x,x,[x,x,{'a':x}]], 0.5)
         draw.mpl.render([x,y])
         units = config.DefaultMetalOptions.default_generic.units
-    '''
+    """
     if mitre_limit is None:
         mitre_limit = DefaultMetalOptions.default_generic.geometry.buffer_mitre_limit
         # TODO: maybe this should be in the renderer for metal?

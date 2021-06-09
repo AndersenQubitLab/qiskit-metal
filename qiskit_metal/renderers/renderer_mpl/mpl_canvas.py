@@ -11,45 +11,31 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-MPL Canvas
-"""
-import logging
-import random
-import sys
+"""MPL Canvas."""
+
 from typing import TYPE_CHECKING, List
 
 import matplotlib
 import matplotlib as mpl
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+
 from cycler import cycler
-from descartes import PolygonPatch
-from IPython.display import display
 from matplotlib.axes import Axes
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
-from matplotlib.cbook import _OrderedSet
-from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.figure import Figure
 from matplotlib.transforms import Bbox
-from PySide2 import QtCore
 from PySide2.QtCore import QTimer
-from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import (QApplication, QMainWindow, QMenu, QMessageBox,
-                               QPushButton, QSizePolicy, QVBoxLayout, QWidget)
-from shapely.geometry import CAP_STYLE, JOIN_STYLE, LineString
-
+from PySide2.QtWidgets import QSizePolicy
 from ... import Dict
 from ...designs import QDesign
-from .mpl_interaction import MplInteraction, PanAndZoom
+from .mpl_interaction import PanAndZoom
 from .mpl_renderer import QMplRenderer
-from .mpl_toolbox import _axis_set_watermark_img, clear_axis, get_prop_cycle
+from .mpl_toolbox import _axis_set_watermark_img, clear_axis
 from .extensions.animated_text import AnimatedText
-
 from .. import config
+
 if not config.is_building_docs():
     from ...toolbox_python.utility_functions import log_error_easy
 
@@ -319,8 +305,7 @@ MPL_CONTEXT_DEFAULT = {
 
 
 class PlotCanvas(FigureCanvas):
-    """
-    Main Plot canvas widget.
+    """Main Plot canvas widget.
 
     This class extends the `FigureCanvas` class.
 
@@ -328,8 +313,10 @@ class PlotCanvas(FigureCanvas):
         `canvas = gui.canvas`
     """
 
-    # See https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/backends/backend_qt5agg.py
-    # Consider using pyqtgraph https://stackoverflow.com/questions/40126176/fast-live-plotting-in-matplotlib-pyplot.
+    # See
+    # https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/backends/backend_qt5agg.py
+    # Consider using pyqtgraph
+    # https://stackoverflow.com/questions/40126176/fast-live-plotting-in-matplotlib-pyplot.
 
     def __init__(self,
                  design: QDesign,
@@ -399,9 +386,7 @@ class PlotCanvas(FigureCanvas):
         self.metal_renderer.set_design(design)
 
     def setup_figure_and_axes(self):
-        """
-        Main setup from scratch.
-        """
+        """Main setup from scratch."""
 
         self.setup_rendering()
 
@@ -420,10 +405,9 @@ class PlotCanvas(FigureCanvas):
                 ax.set_ylim([-0.5, 0.5])
 
     def setup_rendering(self):
-        """Line segment simplificatio:
-        For plots that have line segments (e.g. typical line plots, outlines of
-        polygons, etc.), rendering performance can be controlled by the path.simplify
-        and path.simplify_threshold
+        """Line segment simplificatio: For plots that have line segments (e.g.
+        typical line plots, outlines of polygons, etc.), rendering performance
+        can be controlled by the path.simplify and path.simplify_threshold.
 
             path_simplify:
                 When True, simplify paths by removing "invisible" points to reduce file
@@ -453,9 +437,7 @@ class PlotCanvas(FigureCanvas):
         mpl.rcParams['agg.path.chunksize'] = self.config.chunksize
 
     def get_axis(self):
-        """
-        Gets the current axis.
-        """
+        """Gets the current axis."""
         return self.axes[self.current_axis]
 
     def _plot(self, ax):
@@ -562,7 +544,10 @@ class PlotCanvas(FigureCanvas):
                 clear_axis(ax)
 
     def refresh(self):
-        """Force refresh. Does not replot renderer. Just mpl refresh."""
+        """Force refresh.
+
+        Does not replot renderer. Just mpl refresh.
+        """
         self.update()  # not sure if needed
         self.flush_events()
         self.draw()
@@ -620,14 +605,17 @@ class PlotCanvas(FigureCanvas):
         self.refresh()
 
     def welcome_message(self):
-        """The GUI displays a message to let users know they are using Qiskit Metal.
-        """
+        """The GUI displays a message to let users know they are using Qiskit
+        Metal."""
+
+        # pylint: disable=attribute-defined-outside-init
         self._welcome_text = AnimatedText(
             self.axes[0],
             "Welcome to Qiskit Metal Early Access Alpha",
             self,
             start=False,
             kw={'fontsize': 20})
+
         self._welcome_start_timer = QTimer.singleShot(
             250, self._welcome_message_start)
 
@@ -639,7 +627,7 @@ class PlotCanvas(FigureCanvas):
     def zoom_to_rectangle(self, bounds: tuple, ax: Axes = None):
         """Zoom to the specified rectangle.
 
-        Arguments:
+        Args:
             bounds (tuple): Tuple containing `minx, miny, maxx, maxy`
                      values for the bounds of the series as a whole.
             ax (Axes): Does for all if none (default: {None})
@@ -656,7 +644,7 @@ class PlotCanvas(FigureCanvas):
     def find_component_bounds(self, components: List[str], zoom: float = 1.2):
         """Find bounds of a set of components.
 
-        Arguments:
+        Args:
             components (List[str]): A list of component names
             zoom (float): Fraction to expand the bounding vbox by
 
@@ -665,10 +653,10 @@ class PlotCanvas(FigureCanvas):
         """
         if len(components) == 0:
             self.logger.error('At least one component must be provided.')
-
         # initialize bounds
         bounds = [float("inf"), float("inf"), float("-inf"), float("-inf")]
         for name in components:
+            # self.design.components[name]
             component = self.design.components[name]
             # return (minx, miny, maxx, maxy)
             newbounds = component.qgeometry_bounds()
@@ -681,11 +669,11 @@ class PlotCanvas(FigureCanvas):
                 max(newbounds[2], bounds[2]),
                 max(newbounds[3], bounds[3])
             ]
+
         return bounds
 
     def set_component(self, name: str):
-        """
-        Shortcut to set a component in the component widget to be examined.
+        """Shortcut to set a component in the component widget to be examined.
 
         Args:
             name (str): Name of the component in the design
@@ -696,10 +684,10 @@ class PlotCanvas(FigureCanvas):
         """Clear the annotations.
 
         Raises:
-            Exception: Error while clearning the annotations
+            Exception: Error while clearing the annotations
         """
         try:
-            for ax in self.axes:
+            for dummy_ax in self.axes:
                 for patch in self._annotations['patch']:
                     # ax.patches.remove(patch)
                     # print(patch)
@@ -718,7 +706,7 @@ class PlotCanvas(FigureCanvas):
         self._annotations['text'] = []
 
     def highlight_components(self, component_names: List[str]):
-        """Higjlight a list of components.
+        """Highlight a list of components.
 
         Args:
             component_names (List[str]): A list of component names
@@ -740,7 +728,7 @@ class PlotCanvas(FigureCanvas):
 
         component_id_list = self.design.components.get_list_ints(
             component_names)
-
+        # pylint: disable=protected-access
         for component_id in component_id_list:
             component_id = int(component_id)
 
@@ -805,11 +793,14 @@ class PlotCanvas(FigureCanvas):
                             arrow = patches.FancyArrowPatch(
                                 m, m + n * 0.05, **kw)
                             self._annotations['patch'] += [arrow]
-                            """A fancy arrow patch. It draws an arrow using the ArrowStyle.
-                            The head and tail positions are fixed at the specified start and end points of the arrow,
-                            but the size and shape (in display coordinates) of the arrow does not change when the axis
-                            is moved or zoomed.
-                            """
+                            # """A fancy arrow patch. It draws an arrow using
+                            # the ArrowStyle.
+                            # The head and tail positions are fixed at the
+                            # specified start and end points of the arrow,
+                            # but the size and shape (in display coordinates)
+                            # of the arrow does not change when the axis
+                            # is moved or zoomed.
+                            # """
                             for ax in self.axes:
                                 ax.add_patch(arrow)
 

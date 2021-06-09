@@ -11,29 +11,28 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-Module containing Net information storage.
-"""
+"""Module containing Net information storage."""
 #from typing import Tuple
 import pandas as pd
-from .. import logger
+from qiskit_metal import logger
 
 
 class QNet():
-    """
-    Use DataFrame to hold Net Information about the connected pins of a design.   
-    There is one uniqe net_id for each connected pin.
+    """Use DataFrame to hold Net Information about the connected pins of a
+    design.
+
+    There is one unique net_id for each connected pin.
     """
 
     def __init__(self):
-        """ Hold the net information of all the USED pins within a design."""
+        """Hold the net information of all the USED pins within a design."""
         self.column_names = ['net_id', 'component_id', 'pin_name']
         self._net_info = pd.DataFrame(columns=self.column_names)
         self._qnet_latest_assigned_id = 0
         self.logger = logger  # type: logging.Logger
 
     def _get_new_net_id(self) -> int:
-        """ Provide uniqe new qnet_id.
+        """Provide unique new qnet_id.
 
         Returns:
             int: ID to use for storing a new net within _net_info.
@@ -59,56 +58,73 @@ class QNet():
         """
         return self._net_info
 
+    def _check_arguments(self, comp1_id: int, pin1_name: str, comp2_id: int,
+                         pin2_name: str) -> int:
+        """Error check the arguments before using them.
+
+        Args:
+            comp1_id (int): Name of component 1.
+            pin1_name (str): Corresponding pin name for component1.
+            comp2_id (int): Name of component 2.
+            pin2_name (str): Corresponding pin name for component2.
+
+        Returns:
+            int: 0 means should not be added to _net_info, else 1.
+        """
+        if not isinstance(comp1_id, int):
+            self.logger.warning(
+                f'Expected an int, but have {comp1_id}. '
+                'The pins are were not entered to the net_info table.')
+            return 0
+        if not isinstance(comp2_id, int):
+            self.logger.warning(
+                f'Expected an int, but have {comp2_id}. '
+                'The pins are were not entered to the net_info table.')
+            return 0
+        if not isinstance(pin1_name, str):
+            self.logger.warning(
+                f'Expected a string, but have {pin1_name}. '
+                'The pins are were not entered to the net_info table.')
+            return 0
+        if not isinstance(pin2_name, str):
+            self.logger.warning(
+                f'Expected a string, but have {pin2_name}. '
+                'The pins are were not entered to the net_info table.')
+            return 0
+
+        return 1
+
     def add_pins_to_table(self, comp1_id: int, pin1_name: str, comp2_id: int,
                           pin2_name: str) -> int:
-        """Add two entries into the _net_info table. If either component/pin is already in net_info,
-        the connection will NOT be added to the net_info.
+        """Add two entries into the _net_info table. If either component/pin is
+        already in net_info, the connection will NOT be added to the net_info.
 
-        Arguments:
-            comp1_id (int): Name of component 1. 
+        Args:
+            comp1_id (int): Name of component 1.
             pin1_name (str): Corresponding pin name for component1.
             comp2_id (int): Name of component 2.
             pint2 (str): Corresponding pin name for component2.
 
         Returns:
-            int: 0 if not added to list, otherwise the netid
+            int: 0 if not added to list, otherwise the net_id
         """
-        net_id = 0  # Zero mean false, the pin was not added to _net_info
 
-        if not isinstance(comp1_id, int):
-            self.logger.warning(
-                f'Expected an int, but have {comp1_id}. The pins are were not entered to the net_info table.'
-            )
-            return net_id
-        if not isinstance(comp2_id, int):
-            self.logger.warning(
-                f'Expected an int, but have {comp2_id}. The pins are were not entered to the net_info table.'
-            )
-            return net_id
-        if not isinstance(pin1_name, str):
-            self.logger.warning(
-                f'Expected a string, but have {pin1_name}. The pins are were not entered to the net_info table.'
-            )
-            return net_id
-        if not isinstance(pin2_name, str):
-            self.logger.warning(
-                f'Expected a string, but have {pin2_name}. The pins are were not entered to the net_info table.'
-            )
-            return net_id
+        if self._check_arguments(comp1_id, pin1_name, comp2_id, pin2_name) == 0:
+            return 0
 
-        # Confirm the component-pin combonation is NOT in _net_info, before adding them.
-        for (netID, component_id,
+        # Confirm the component-pin combination is NOT in _net_info, before adding them.
+        for (net_identity, component_id,
              pin_name) in self._net_info.itertuples(index=False):
             if ((component_id == comp1_id) and (pin_name == pin1_name)):
                 self.logger.warning(
-                    f'Component: {comp1_id} and pin: {pin1_name} are already in net_info with net_id {netID}'
-                )
-                return net_id
+                    f'Component: {comp1_id} and pin: {pin1_name} are '
+                    f'already in net_info with net_id {net_identity}')
+                return 0
             if ((component_id == comp2_id) and (pin_name == pin2_name)):
                 self.logger.warning(
-                    f'Component: {comp2_id} and pin: {pin2_name} are already in net_info with net_id {netID}'
-                )
-                return net_id
+                    f'Component: {comp2_id} and pin: {pin2_name} are '
+                    f'already in net_info with net_id {net_identity}')
+                return 0
 
         net_id = self._get_new_net_id()
 
@@ -118,26 +134,22 @@ class QNet():
 
         self._net_info = self._net_info.append(temp_df, ignore_index=True)
 
-        # print(self._net_info)
         return net_id
 
     def delete_net_id(self, net_id_to_remove: int):
-        """
-        Removes the two entries with net_id_to_remove.
-        If id is in _net_info, the entry will be removed.
+        """Removes the two entries with net_id_to_remove. If id is in
+        _net_info, the entry will be removed.
 
-        Arguments:
+        Args:
             net_id_to_remove (int): The id to remove.
         """
 
         self._net_info.drop(
             self._net_info.index[self._net_info['net_id'] == net_id_to_remove],
             inplace=True)
-        return
 
     def delete_all_pins_for_component(self, component_id_to_remove: int) -> set:
-        """
-        Delete all the pins for a given component id.
+        """Delete all the pins for a given component id.
 
         Args:
             component_id_to_remove (int): Component ID to remove
@@ -147,11 +159,11 @@ class QNet():
         """
         all_net_id_deleted = set()
 
-        for (netID, component_id,
-             pin_name) in self._net_info.itertuples(index=False):
-            if (component_id == component_id_to_remove):
-                all_net_id_deleted.add(netID)
-                self.delete_net_id(netID)
+        for (net_identity, component_id,
+             dummy_pin_name) in self._net_info.itertuples(index=False):
+            if component_id == component_id_to_remove:
+                all_net_id_deleted.add(net_identity)
+                self.delete_net_id(net_identity)
 
         return all_net_id_deleted
 
@@ -159,7 +171,7 @@ class QNet():
             self, net_id_search: int) -> pd.core.frame.DataFrame:
         """Search with a net_id to get component id and pin name.
 
-        Arguments:
+        Args:
             net_id_search (int): Unique net id which connects two pins within a design.
 
         Returns:

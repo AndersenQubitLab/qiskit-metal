@@ -11,9 +11,7 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-Plotting functions for shapely components using mpl.
-"""
+"""Plotting functions for shapely components using mpl."""
 
 import descartes  # shapely plot
 import matplotlib as mpl
@@ -27,7 +25,6 @@ from matplotlib.cbook import _OrderedSet
 from shapely.geometry import LinearRing, Polygon  # Point, LineString,
 
 from ... import Dict
-from ...qlibrary import is_component
 from ...draw import BaseGeometry
 from .mpl_interaction import figure_pz
 
@@ -47,30 +44,29 @@ style_config = Dict(
     #exterior = dict(lw=1, edgecolors='k', alpha=0.5),
     # interior = dict(facecolors='w', lw=1, edgecolors='grey'))
 )
-"""Style configuraiton"""
+"""Style configuration"""
 
 
 def _render_poly_zkm(poly: Polygon, ax, kw=None, kw_hole=None):
-    '''
-    Style and draw a shapely polygon using MPL.
+    """Style and draw a shapely polygon using MPL.
 
     Args:
         poly (Polygon): The polygon.
         ax (plt.Axes): Matplotlib axis to render to.
         kw (dict): Dictionary of kwargs for the plotting.  Defaults to None.
         kw_hold (kw_hole): kw_hole.  Defaults to None.
-    '''
+    """
     if kw_hole is None:
         kw_hole = {}
     if kw is None:
         kw = {}
 
-    # should probably  only creat thes once and pass these in here
+    # should probably  only create these once and pass these in here
     kw = {**style_config.poly.exterior, **kw}
     kw_hole = {**style_config.poly.interior, **kw}
 
     if not poly.exterior == LinearRing():  # not empty - better check?
-
+        # pylint: disable=protected-access
         # Exterior
         coords = np.array(poly.exterior.coords)
         mpl_poly = mpl.patches.Polygon(coords)
@@ -93,8 +89,7 @@ def _render_poly_zkm(poly: Polygon, ax, kw=None, kw_hole=None):
 
 
 def render_poly(poly: shapely.geometry.Polygon, ax: plt.Axes, kw=None):
-    """
-    Render an individual shapely shapely.geometry.Polygon.
+    """Render an individual shapely shapely.geometry.Polygon.
 
     Args:
         poly (shapely.geometry.Polygon): Poly or multipoly to render.
@@ -121,9 +116,7 @@ def render(
     labels=None,
     __depth=-1,  # how many sublists in we are
     _iteration=0):  # how many components we have plotted
-    '''
-    Main plotting function.
-    Plots onto an axis.
+    """Main plotting function. Plots onto an axis.
 
     Args:
         components: A list, dict, tuple, itterable, or shapely object.
@@ -135,8 +128,8 @@ def render(
 
     Return:
         int: Interation
-    '''
-    # TODO: Update to handle plotting argumetn with *args and **kwargs
+    """
+    # TODO: Update to handle plotting argument with *args and **kwargs
     # but this needs the .draw functions to be updated
 
     __depth = __depth + 1
@@ -165,7 +158,7 @@ def render(
         #    style_axis_simple(ax, labels=labels)
         return _iteration
 
-    elif isinstance(components, list):
+    if isinstance(components, list):
         for objs in components:
             _iteration = render(objs,
                                 ax=ax,
@@ -184,8 +177,8 @@ def render(
     # We have now a single object to draw
     obj = components
 
-    if isinstance(obj, shapely.geometry.Polygon) or isinstance(
-            obj, shapely.geometry.MultiPolygon):
+    if isinstance(obj,
+                  (shapely.geometry.MultiPolygon, shapely.geometry.Polygon)):
         render_poly(obj, ax=ax, kw=kw)  # , **kwargs)
 
     else:
@@ -206,48 +199,44 @@ def render(
     return _iteration + 1
 
 
-'''
-def draw_all_objects(components, ax, func=lambda x: x, root_name='components'):
-    """
-    #  TODO: This is very outdated, remove
+# '''
+# def draw_all_objects(components, ax, func=lambda x: x, root_name='components'):
+#     """
+#     #  TODO: This is very outdated, remove
 
+#     Args:
+#         components {[type]} -- [description]
+#         ax {[type]} -- [description]
+#         func {[type]} -- [description] Defaults to {lambdax:x}
+#         root_name {str} -- [description] Defaults to {'components'}
+#     """
 
-    Arguments:
-        components {[type]} -- [description]
-        ax {[type]} -- [description]
+#     # logger.debug(components.keys())
+#     for name, obj in components.items():
+#         if isinstance(obj, dict):
+#             if name.startswith('components'):
+#                 #logger.debug(f'Drawing: {root_name}.{name}')
+#                 # allow transformation of components
+#                 render(func(obj), ax=ax)
+#             else:
+#                 draw_all_objects(obj, ax, root_name=root_name+'.'+name)
 
-    Keyword Arguments:
-        func {[type]} -- [description] Defaults to {lambdax:x}
-        root_name {str} -- [description] Defaults to {'components'}
-    """
-
-    # logger.debug(components.keys())
-    for name, obj in components.items():
-        if isinstance(obj, dict):
-            if name.startswith('components'):
-                #logger.debug(f'Drawing: {root_name}.{name}')
-                # allow transmofmation of components
-                render(func(obj), ax=ax)
-            else:
-                draw_all_objects(obj, ax, root_name=root_name+'.'+name)
-
-        elif is_component(obj):
-            #logger.debug(f' Metal_Object: {obj}')
-            render(obj.components, ax=ax)
-'''
+#         elif is_component(obj):
+#             #logger.debug(f' Metal_Object: {obj}')
+#             render(obj.components, ax=ax)
+# '''
 
 ##########################################################################################
 # Style subroutines
 
 
 def style_axis_simple(ax, labels=None):
-    '''
-    Style function for axis called by `render`.
+    """Style function for axis called by `render`.
 
     Args:
         ax (plt.Axes): Matplotlib axis to render to.  Defaults to None.
         labels (str): Label
-    '''
+    """
     if ax is None:
         ax = plt.gca()
 
@@ -259,9 +248,9 @@ def style_axis_simple(ax, labels=None):
 
     # Labels
     if not labels is None:
-        fontP = mpl.font_manager.FontProperties()
-        fontP.set_size('small')
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=fontP)
+        font_p = mpl.font_manager.FontProperties()
+        font_p.set_size('small')
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop=font_p)
 
 
 rcParams = plt.matplotlib.rcParams
@@ -320,12 +309,10 @@ def style_axis_standard(ax):
 
 
 def figure_spawn(fig_kw=None):
-    '''
-    Spawn a simple, interactive matplotlib figure and gui
-    with styled axis.  Use mouse wheel and click and drag
-    to navigate.
+    """Spawn a simple, interactive matplotlib figure and gui with styled axis.
+    Use mouse wheel and click and drag to navigate.
 
-    Results in a plot that spwaned up as a window! Make sure
+    Results in a plot that spawned up as a window! Make sure
     to enable non-inline matplotlib.
 
     ..code-block python
@@ -338,7 +325,7 @@ def figure_spawn(fig_kw=None):
 
     Returns:
         (fig_draw, ax_draw)
-    '''
+    """
     if not fig_kw:
         fig_kw = {}
     fig_draw = figure_pz(**{**dict(num=1), **fig_kw})
@@ -354,10 +341,11 @@ def figure_spawn(fig_kw=None):
     ax_draw.set_xlabel('X position (mm)')
     ax_draw.set_ylabel('Y position (mm)')
 
+    # pylint: disable=import-outside-toplevel
     def clear_me():
         plt.sca(ax_draw)
-        from pyEPR.toolbox_plotting import plt_cla
-        plt_cla(ax_draw)
+        #from pyEPR.toolbox_plotting import plt_cla
+        # plt_cla(ax_draw)
 
     ax_draw.clear_me = clear_me
 
@@ -379,19 +367,20 @@ def figure_spawn(fig_kw=None):
 
 
 def _axis_set_watermark_img(ax: plt.Axes, file: str, size: float = 0.25):
-    """Burn the axis watermark into the image
+    """Burn the axis watermark into the image.
 
     Args:
         ax (plt.Axes): Matplotlib axis to render to.  Defaults to None.
         file (str): The file.
         size (float): The size.  Defaults to None.
     """
-    ### Load image
+    # Load image
     datafile = cbook.get_sample_data(str(file), asfileobj=False)
     img = image.imread(datafile)
-    #im[:, :, -1] = 0.5  # set the alpha channel
+    # im[:, :, -1] = 0.5  # set the alpha channel
 
     # window aspect
+    # pylint: disable=invalid-name
     b = ax.get_window_extent()
     b = abs(b.height / b.width)
     # b = ax.get_tightbbox(ax.get_figure().canvas.get_renderer())
@@ -414,11 +403,12 @@ def clear_axis(ax: plt.Axes):
     """Clear all plotted objects on an axis including lines, patches, tests, tables,
     artists, images, mouseovers, child axes, legends, collections, and containers.
     See: https://github.com/matplotlib/matplotlib/blob/master/lib/matplotlib/axes/_base.py#L1040
-    
+
     Args:
         ax (plt.Axes): MPL axis to clear
     """
     # ax.clear()
+    # pylint: disable=protected-access
     ax.lines = []
     ax.patches = []
     ax.texts = []
