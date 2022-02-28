@@ -221,17 +221,15 @@ class QAnsysRenderer(QRendererAnalysis):
             initiate (bool, optional): True to initiate the renderer. Defaults to True.
             options (Dict, optional):  Used to override all options. Defaults to None.
         """
-        # Variables to connect to Ansys
-        self._rapp = None
-        self._rdesktop = None
-
-        # Initialize renderer
         super().__init__(design=design, initiate=initiate, options=options)
 
         # Default behavior is to render all components unless a strict subset was chosen
         self.render_everything = True
 
         self._pinfo = None
+        # Connected to Ansys variables
+        self._rapp = None
+        self._rdesktop = None
 
     @property
     def initialized(self):
@@ -394,15 +392,15 @@ class QAnsysRenderer(QRendererAnalysis):
                 if not project_name else project_name,
                 design_name=self._options['design_name']
                 if not design_name else design_name)
-        except pythoncom.com_error as error:  # pylint: disable=no-member
+        except pythoncom.com_error as error:
             print("com_error: ", error)
             hr, msg, exc, arg = error.args
             if msg == "Invalid class string":  # and hr == -2147221005 and exc is None and arg is None
                 self.logger.error(
                     "pyEPR cannot find the Ansys COM. Ansys installation might not have registered it. "
-                    "To verify if this is the problem, execute the following: "
-                    "`print(win32com.client.Dispatch('AnsoftHfss.HfssScriptInterface'))` "
-                    "If the print-out is not `<COMObject ...>` then Ansys COM is not registered, "
+                    "To verify if this is the problem, execute the following: ",
+                    "`print(win32com.client.Dispatch('AnsoftHfss.HfssScriptInterface'))` ",
+                    "If the print-out is not `<COMObject ...>` then Ansys COM is not registered, ",
                     "and you will need to look into correcting your Ansys installation."
                 )
             raise error
@@ -453,16 +451,6 @@ class QAnsysRenderer(QRendererAnalysis):
                 'It does not look like you are connected to Ansys. Please use connect_ansys() '
                 'and make sure self.pinfo is set. There must be a project open in Ansys first.'
             )
-
-    def get_active_design_name(self):
-        """Returns the name of the Ansys Design Object
-
-        Returns:
-            (str): Name of the active Ansys Design
-        """
-        if self.pinfo:
-            if self.pinfo.project:
-                return self.pinfo.project.get_active_design().name
 
     @property
     def pinfo(self) -> epr.ProjectInfo:
@@ -1028,12 +1016,13 @@ class QAnsysRenderer(QRendererAnalysis):
             table = table[mask]
 
         for _, qgeom in table.iterrows():
-            self.render_element(qgeom, bool(table_type == 'junction'))
+            self.render_element(qgeom, bool(table_type == 'junction'),
+                bool(table_type == 'polyInd'))
 
         if table_type == 'path':
             self.auto_wirebonds(table)
 
-    def render_element(self, qgeom: pd.Series, is_junction: bool):
+    def render_element(self, qgeom: pd.Series, is_junction: bool, is_inductor: bool):
         """Render an individual shape whose properties are listed in a row of
         QGeometry table. Junction elements are handled separately from non-
         junction elements, as the former consist of two rendered shapes, not
@@ -1046,6 +1035,8 @@ class QAnsysRenderer(QRendererAnalysis):
         qc_shapely = qgeom.geometry
         if is_junction:
             self.render_element_junction(qgeom)
+        elif is_inductor:
+            self.render_element_polyInd(qgeom)
         else:
             if isinstance(qc_shapely, shapely.geometry.Polygon):
                 self.render_element_poly(qgeom)
@@ -1628,7 +1619,7 @@ class QAnsysRenderer(QRendererAnalysis):
             self.epr_start(junctions, dissipatives)
         self.epr_distributed_analysis.do_EPR_analysis()
 
-    def epr_spectrum_analysis(self, cos_trunc: int = 8, fock_trunc: int = 7):
+    def epr_spectrum_analysis(self, cos_trunc: int = 8, fock_trunc: int = 7, flux: float = 0,  basis: str = 'HO'):
         """Core epr analysis method.
 
         Args:
@@ -1638,7 +1629,9 @@ class QAnsysRenderer(QRendererAnalysis):
         self.epr_quantum_analysis = epr.QuantumAnalysis(
             self.epr_distributed_analysis.data_filename)
         self.epr_quantum_analysis.analyze_all_variations(cos_trunc=cos_trunc,
-                                                         fock_trunc=fock_trunc)
+                                                         fock_trunc=fock_trunc,
+                                                         flux=flux,
+                                                         basis=basis)
 
     def epr_report_hamiltonian(self,
                                swp_variable: str = 'variation',
